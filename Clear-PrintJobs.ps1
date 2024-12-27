@@ -5,21 +5,17 @@ if (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdenti
     exit
 }
 
-$WarningPreference = 'SilentlyContinue'
-$ErrorActionPreference = 'SilentlyContinue'
-$VerbosePreference = 'SilentlyContinue'
-$DebugPreference = 'SilentlyContinue'
-$InformationPreference = 'Continue'
-
+# Initialize the print spooler service object
+$spoolerService = Get-Service -Name Spooler
 
 # Stop the print spooler service and wait
 Write-Host "Stopping the print spooler service..."
-Stop-Service -Name Spooler -Force
+$spoolerService | Stop-Service -Force
 Start-Sleep -Seconds 2
 
 # Kill the spooler.exe process and printpipelinesvc.exe process
 Write-Host "Killing spool adjacent processes..."
-Get-Process -Name spoolsv, PrintIsolationHost, Printfilterpipelinesvc | Stop-Process -Force
+Get-Process -Name spoolsv, PrintIsolationHost, Printfilterpipelinesvc -ErrorAction SilentlyContinue | Stop-Process -Force
 Start-Sleep -Seconds 5
 
 # Clear all print jobs by deleting files from the PRINTERS folder
@@ -37,5 +33,5 @@ $spoolerService.Refresh()
 if ($spoolerService.Status -ne 'Running') {
     # Start the print spooler service
     Write-Host "Starting the print spooler service, please wait..."
-    Start-Service -Name Spooler
+    $spoolerService | Start-Service
 }
